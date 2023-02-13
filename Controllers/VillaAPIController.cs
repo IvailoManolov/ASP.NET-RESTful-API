@@ -31,6 +31,7 @@ namespace MagicVilla.Controllers
         {
             if (id == 0)
             {
+                _logger.LogError($"Getting Villa Error with Id:[{id}]");
                 return BadRequest();
             }
 
@@ -53,6 +54,7 @@ namespace MagicVilla.Controllers
 
             if (VillaStore.VillaDTOs.FirstOrDefault(x => x.VillaName.ToLower() == villaDTO.VillaName.ToLower()) != null)
             {
+                _logger.LogWarning("Villa already exists!");
                 ModelState.AddModelError("", "Villa already exists!");
                 return BadRequest(ModelState);
             }
@@ -82,6 +84,7 @@ namespace MagicVilla.Controllers
         {
             if (id == 0)
             {
+                _logger.LogError("Id can't be 0");
                 return BadRequest();
             }
 
