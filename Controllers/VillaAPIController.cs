@@ -10,17 +10,20 @@ namespace MagicVilla.Controllers
     public class VillaAPIController : ControllerBase
     {
         private readonly ILogger<VillaAPIController> _logger;
+        private readonly ApplicationDBContext _dbContext;
 
-        public VillaAPIController(ILogger<VillaAPIController> logger)
+
+        public VillaAPIController(ILogger<VillaAPIController> logger, ApplicationDBContext dbContext)
         {
             _logger = logger;
+            _dbContext = dbContext;
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<VillaDTO>> GetVillas()
         {
-            return Ok(VillaStore.VillaDTOs);
+            return Ok(_dbContext.Villas);
         }
 
         [HttpGet("{id:int}", Name = "GetVilla")]
@@ -35,7 +38,7 @@ namespace MagicVilla.Controllers
                 return BadRequest();
             }
 
-            var villa = VillaStore.VillaDTOs.FirstOrDefault(x => x.VillaId == id);
+            var villa = _dbContext.Villas.FirstOrDefault(x => x.VillaId== id);
 
             if (villa == null)
             {
@@ -51,8 +54,7 @@ namespace MagicVilla.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public ActionResult<VillaDTO> CreateVilla([FromBody] VillaDTO villaDTO)
         {
-
-            if (VillaStore.VillaDTOs.FirstOrDefault(x => x.VillaName.ToLower() == villaDTO.VillaName.ToLower()) != null)
+            if (_dbContext.Villas.FirstOrDefault(x => x.VillaName.ToLower() == villaDTO.VillaName.ToLower()) != null)
             {
                 _logger.LogWarning("Villa already exists!");
                 ModelState.AddModelError("", "Villa already exists!");
@@ -69,9 +71,21 @@ namespace MagicVilla.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            villaDTO.VillaId = VillaStore.VillaDTOs.OrderByDescending(x => x.VillaId).FirstOrDefault().VillaId + 1;
+            Villa model = new Villa()
+            {
+                Amenity = villaDTO.Amenity,
+                Details = villaDTO.Details,
+                VillaId = villaDTO.VillaId,
+                ImageUrl = villaDTO.ImageUrl,
+                VillaName = villaDTO.VillaName,
+                Occupancy = villaDTO.Occupancy,
+                Rate = villaDTO.Rate,
+                Sqft = villaDTO.Sqft
+            };
 
-            VillaStore.VillaDTOs.Add(villaDTO);
+            _dbContext.Villas.Add(model);
+
+            _dbContext.SaveChanges();
 
             return CreatedAtRoute("GetVilla", new { id = villaDTO.VillaId }, villaDTO);
         }
@@ -88,14 +102,15 @@ namespace MagicVilla.Controllers
                 return BadRequest();
             }
 
-            var villa = VillaStore.VillaDTOs.FirstOrDefault(x => x.VillaId == id);
+            var villa = _dbContext.Villas.FirstOrDefault(x => x.VillaId == id);
 
             if (villa == null)
             {
                 return NotFound();
             }
+            _dbContext.Villas.Remove(villa);
 
-            VillaStore.VillaDTOs.Remove(villa);
+            _dbContext.SaveChanges();
 
             return NoContent();
         }
@@ -110,11 +125,21 @@ namespace MagicVilla.Controllers
                 return BadRequest();
             }
 
-            var villa = VillaStore.VillaDTOs.FirstOrDefault(x => x.VillaId == id);
+            Villa model = new Villa()
+            {
+                Amenity = villaDTO.Amenity,
+                Details = villaDTO.Details,
+                VillaId = villaDTO.VillaId,
+                ImageUrl = villaDTO.ImageUrl,
+                VillaName = villaDTO.VillaName,
+                Occupancy = villaDTO.Occupancy,
+                Rate = villaDTO.Rate,
+                Sqft = villaDTO.Sqft
+            };
 
-            villa.VillaName = villaDTO.VillaName;
-            villa.Sqft = villaDTO.Sqft;
-            villa.Occupancy= villaDTO.Occupancy;
+            _dbContext.Villas.Update(model);
+
+            _dbContext.SaveChanges();
 
             return NoContent();
         }
